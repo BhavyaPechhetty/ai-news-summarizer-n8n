@@ -1,0 +1,263 @@
+{
+  "name": "NEWS-Summarizer new",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 10
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -736,
+        -48
+      ],
+      "id": "e3506da7-7a95-4a30-b35d-b070f55a84ad",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "url": "https://aibusiness.com/rss.xml",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        -512,
+        -48
+      ],
+      "id": "ca110ea5-361b-4fc9-88b2-239eb4f00907",
+      "name": "AI-NEWS-FEED"
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        64,
+        16
+      ],
+      "id": "9025efa6-2db8-4f61-9c01-1cf7241ce0d7",
+      "name": "Data-Aggregate"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.data }}",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "You are an AI news summarizer handling multiple categories.\nUse only the provided items. Do not invent content.\n\nOrganize by category and provide up to 3 AI news and up to 3 broader technology news.\n\nFormat exactly like this:\n\nHi there,\nHere's your Tech Brief:\n\n\nAI NEWS\n=======\nFor each AI-related item, output:\nHEADLINE IN ALL CAPS\nSummary in 1–2 sentences.\nLink: <paste link>\n\n\nTECHNOLOGY UPDATES\n==================\nFor each broader technology-related item, output:\nHEADLINE IN ALL CAPS\nSummary in 1–2 sentences.\nLink: <paste link>\n\n\nKeep it professional, concise, and easy to read."
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        256,
+        16
+      ],
+      "id": "612c1f09-68fd-45f0-8eb4-ac0fe2e754ac",
+      "name": "AI-Summarization"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3.1-flash-lite",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        272,
+        208
+      ],
+      "id": "73f3dfaa-8f89-4fbc-aa9b-911702eade80",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "9VSxmyi1GxEddcjA",
+          "name": "Google Gemini(PaLM) Api account 10832"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "maxItems": 10
+      },
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        -96,
+        16
+      ],
+      "id": "60c78c97-aa81-4318-9f01-35d7446f3054",
+      "name": "Limit"
+    },
+    {
+      "parameters": {
+        "sendTo": "your-email@example.com",
+        "subject": "Today AI News For You!..",
+        "message": "={{ $json.text }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        560,
+        16
+      ],
+      "id": "436bce30-e759-498a-85af-55581b73b27d",
+      "name": "Send a message",
+      "webhookId": "a0a56757-3398-4742-a480-489825b73102",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "RFceD5isAAog0Yjt",
+          "name": "Gmail account 2908"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://techcrunch.com/feed/",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        -496,
+        128
+      ],
+      "id": "fd5c59bc-9eb9-4f53-9c77-51b39da97b92",
+      "name": "RSS Read"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -288,
+        16
+      ],
+      "id": "4cff481a-de4d-4c70-bf74-7489c6955980",
+      "name": "data-merger"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "AI-NEWS-FEED",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "RSS Read",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI-NEWS-FEED": {
+      "main": [
+        [
+          {
+            "node": "data-merger",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Data-Aggregate": {
+      "main": [
+        [
+          {
+            "node": "AI-Summarization",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI-Summarization",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limit": {
+      "main": [
+        [
+          {
+            "node": "Data-Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI-Summarization": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RSS Read": {
+      "main": [
+        [
+          {
+            "node": "data-merger",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "data-merger": {
+      "main": [
+        [
+          {
+            "node": "Limit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "d3299def-b66c-4d70-abcd-0901413413e1",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "969257b09ad2942bbaff2e2288304f4969030574d109cdeca05bf11f630884df"
+  },
+  "id": "abVjZqOb5XzE1OYZ",
+  "tags": []
+}
